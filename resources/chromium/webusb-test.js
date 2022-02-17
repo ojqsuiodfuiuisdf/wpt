@@ -386,6 +386,16 @@ class FakeWebUsbService {
       this.client_.onDeviceAdded(fakeDeviceInitToDeviceInfo(device.guid, info));
   }
 
+  forgetDevice(fakeDevice) {
+    let device = this.devices_.get(fakeDevice);
+    if (!device)
+      throw new Error('Cannot forget unknown device.');
+
+    this.devices_.delete(device.fakeDevice);
+    this.devicesByGuid_.delete(device.guid);
+    return Promise.resolve();
+  }
+
   removeDevice(fakeDevice) {
     let device = this.devices_.get(fakeDevice);
     if (!device)
@@ -482,6 +492,10 @@ class FakeUSBDevice {
 
   disconnect() {
     setTimeout(() => internal.webUsbService.removeDevice(this), 0);
+  }
+
+  forget() {
+    return internal.webUsbService.forgetDevice(this);
   }
 }
 

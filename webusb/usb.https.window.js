@@ -59,6 +59,29 @@ usb_test(() => {
 }, 'getDevices returns the same object as requestDevice');
 
 usb_test(() => {
+  return getFakeDevice().then(({ device, fakeDevice }) => {
+    navigator.usb.test.onrequestdevice = event => {
+      navigator.usb.test.onrequestdevice = undefined;
+      event.respondWith(fakeDevice);
+    };
+    return callWithTrustedClick(() => {
+      return navigator.usb.requestDevice({ filters: [] }).then(chosenDevice => {
+        assert_equals(chosenDevice, device);
+        return navigator.usb.getDevices().then(devices => {
+          assert_equals(devices.length, 1);
+          assert_equals(devices[0], chosenDevice);
+          return fakeDevice.forget().then(() => {
+            return navigator.usb.getDevices().then(devices => {
+              assert_equals(devices.length, 0);
+            });
+          });
+        });
+      });
+    });
+  });
+}, 'forget removes device from getDevices');
+
+usb_test(() => {
   const expectedFilters = [
     { vendorId: 1234, classCode: 0xFF, serialNumber: "123ABC" },
     { vendorId: 5678, productId: 0xF00F },
